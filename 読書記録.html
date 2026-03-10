@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="読書記録">
+<title>読書記録</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+  :root {
+    --ink: #1a1209;
+    --paper: #faf6ef;
+    --paper2: #f3ede2;
+    --accent: #8b3a1a;
+    --accent2: #c4622d;
+    --gold: #b8963e;
+    --muted: #7a6e60;
+    --line: #d8cfc0;
+    --shadow: rgba(26,18,9,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 52px 20px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    letter-spacing: 0.12em;
+    color: var(--gold);
+  }
+  .header p {
+    font-size: 11px;
+    color: #9a8f7e;
+    margin-top: 3px;
+    letter-spacing: 0.08em;
+  }
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .btn-new {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 18px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: background 0.2s;
+  }
+  .btn-new:hover { background: var(--accent2); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--ink);
+    padding: 0 20px 12px;
+    gap: 6px;
+  }
+  .tab {
+    background: none;
+    border: 1px solid #3a3028;
+    color: #9a8f7e;
+    border-radius: 14px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Content */
+  .content { padding: 16px; }
+
+  /* Book Card */
+  .book-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border-left: 4px solid var(--gold);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .book-card:active { transform: scale(0.98); }
+  .book-card:hover { box-shadow: 0 4px 16px var(--shadow); }
+
+  .book-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+  .book-author {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .book-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .badge-read { background: #e8f5e9; color: #2e7d32; }
+  .badge-reading { background: #fff3e0; color: #e65100; }
+  .badge-want { background: #e8eaf6; color: #3949ab; }
+
+  .stars { color: var(--gold); font-size: 13px; }
+
+  .book-date {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  /* Form / Detail view */
+  .form-view {
+    display: none;
+    padding: 16px;
+    padding-bottom: 40px;
+  }
+  .form-view.active { display: block; }
+  .list-view.hidden { display: none; }
+
+  .form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .section-title {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .field-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 12px;
+  }
+  .field-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    letter-spacing: 0.06em;
+  }
+  .field-input {
+    background: var(--paper2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border 0.2s;
+    width: 100%;
+  }
+  .field-input:focus { border-color: var(--gold); }
+  textarea.field-input { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+  .field-row-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .field-row-2col .field-row { min-width: 0; }
+  .field-row-2col .field-input { width: 100%; min-width: 0; }
+
+  /* Segmented control */
+  .seg-control {
+    display: flex;
+    background: var(--paper2);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid var(--line);
+  }
+  .seg-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .seg-btn.active {
+    background: white;
+    color: var(--ink);
+    font-weight: 500;
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+
+  /* Star rating */
+  .star-rating {
+    display: flex;
+    gap: 6px;
+    font-size: 26px;
+    cursor: pointer;
+  }
+  .star-rating span { color: #ddd; transition: color 0.1s; }
+  .star-rating span.lit { color: var(--gold); }
+
+  /* Reading level */
+  .read-level {
+    display: flex;
+    gap: 8px;
+  }
+  .level-btn {
+    flex: 1;
+    background: var(--paper2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    text-align: center;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .level-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* Save button */
+  .btn-save {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 16px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: background 0.2s;
+  }
+  .btn-save:hover { background: var(--accent2); }
+
+  .btn-back {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+    font-family: 'Noto Sans JP', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+  .stat-num {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 22px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  select.field-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a6e60' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  .btn-print-open {
+    background: none;
+    border: 1px solid #3a3028;
+    color: #9a8f7e;
+    border-radius: 8px;
+    padding: 7px 11px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .btn-print-open:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* Print Modal */
+  .print-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 998;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .print-modal.active { display: flex; }
+  .print-sheet {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%;
+    max-width: 430px;
+  }
+  .print-sheet h3 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 16px;
+    color: var(--accent);
+    margin-bottom: 16px;
+    text-align: center;
+    letter-spacing: 0.08em;
+  }
+  .print-size-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .print-size-btn {
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 10px;
+    background: var(--paper2);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  .print-size-btn.active { border-color: var(--accent); background: #fdf3e8; }
+  .print-size-btn .size-label { font-size: 20px; font-weight: 700; color: var(--accent); font-family: 'Noto Serif JP', serif; }
+  .print-size-btn .size-desc { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .print-range-section { margin-bottom: 14px; }
+  .print-range-section label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+  .btn-do-print {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Noto Serif JP', serif;
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .btn-cancel-print {
+    width: 100%;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 12px;
+    padding: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  #printArea { display: none; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body > *:not(#printArea) { display: none !important; }
+    #printArea { display: block !important; }
+
+    /* B6横向き: 182mm × 128mm */
+    @page.page-b6 { size: 182mm 128mm landscape; margin: 0; }
+    .pcard-b6 {
+      width: 182mm; height: 128mm;
+      padding: 6mm 8mm;
+      box-sizing: border-box;
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #1a1209;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 75×125mm縦向き: 75mm × 125mm */
+    .pcard-75 {
+      width: 75mm; height: 125mm;
+      padding: 4mm 5mm;
+      box-sizing: border-box;
+      font-family: 'Noto Sans JP', sans-serif;
+      color: #1a1209;
+      page-break-after: always;
+      break-after: page;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ヘッダー */
+    .pcard-header {
+      background: #1a1209; color: #b8963e;
+      font-family: 'Noto Serif JP', serif; font-weight: 700; letter-spacing: 0.1em;
+      flex-shrink: 0;
+    }
+    .pcard-b6 .pcard-header  { font-size: 9pt;   margin: -6mm -8mm 4mm; padding: 2.5mm 8mm; }
+    .pcard-75 .pcard-header  { font-size: 7pt;   margin: -4mm -5mm 2.5mm; padding: 1.5mm 5mm; }
+
+    /* メインレイアウト：B6は左右分割、75mmは縦積み */
+    .pcard-body { display: flex; gap: 4mm; flex: 1; min-height: 0; }
+    .pcard-75 .pcard-body { flex-direction: column; gap: 2mm; }
+
+    /* 表紙 */
+    .pcard-cover {
+      object-fit: cover; border: 0.3mm solid #ccc; border-radius: 1.5mm; flex-shrink: 0;
+    }
+    .pcard-b6 .pcard-cover { width: 26mm; height: 100%; max-height: 90mm; }
+    .pcard-75 .pcard-cover { width: 100%; height: 28mm; object-fit: cover; }
+    .pcard-cover-ph {
+      border: 0.3mm solid #ddd; border-radius: 1.5mm; background: #f5f5f5; flex-shrink: 0;
+    }
+    .pcard-b6 .pcard-cover-ph { width: 26mm; }
+    .pcard-75 .pcard-cover-ph { width: 100%; height: 28mm; }
+
+    /* 右側コンテンツ */
+    .pcard-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2mm; }
+    .pcard-75 .pcard-right { gap: 1.5mm; }
+
+    /* 書名・著者 */
+    .pcard-title {
+      font-family: 'Noto Serif JP', serif; font-weight: 700; line-height: 1.35;
+      border-bottom: 0.3mm solid #ddd; padding-bottom: 1.5mm;
+    }
+    .pcard-b6 .pcard-title  { font-size: 11pt; }
+    .pcard-75 .pcard-title  { font-size: 8.5pt; }
+    .pcard-author { color: #555; }
+    .pcard-b6 .pcard-author { font-size: 7.5pt; }
+    .pcard-75 .pcard-author { font-size: 6pt; }
+
+    /* フィールドグリッド */
+    .pcard-fields {
+      border: 0.3mm solid #ddd; border-radius: 1.5mm; overflow: hidden; flex-shrink: 0;
+    }
+    .pcard-row { display: flex; border-bottom: 0.3mm solid #eee; }
+    .pcard-row:last-child { border-bottom: none; }
+    .pcard-half { display: flex; flex: 1; border-right: 0.3mm solid #eee; }
+    .pcard-half:last-child { border-right: none; }
+    .pcard-lbl {
+      background: #f5f0e8; color: #7a6e60; font-weight: 500;
+      flex-shrink: 0; display: flex; align-items: center;
+      border-right: 0.3mm solid #ddd;
+    }
+    .pcard-val { flex: 1; display: flex; align-items: center; }
+    .pcard-b6 .pcard-lbl { font-size: 6.5pt; min-width: 14mm; padding: 1mm 1.5mm; }
+    .pcard-b6 .pcard-val  { font-size: 7pt;  padding: 1mm 2mm; }
+    .pcard-75 .pcard-lbl { font-size: 5.5pt; min-width: 10mm; padding: 0.6mm 1mm; }
+    .pcard-75 .pcard-val  { font-size: 6pt;  padding: 0.6mm 1.5mm; }
+
+    /* 読み方・評価 */
+    .pcard-ratings { display: flex; gap: 2mm; align-items: center; flex-wrap: wrap; flex-shrink: 0; }
+    .pcard-75 .pcard-ratings { gap: 1.5mm; }
+    .pcard-rl, .pcard-eval-box {
+      border: 0.3mm solid #ccc; border-radius: 1mm; color: #bbb;
+    }
+    .pcard-b6 .pcard-rl, .pcard-b6 .pcard-eval-box { font-size: 6.5pt; padding: 0.6mm 1.8mm; }
+    .pcard-75 .pcard-rl, .pcard-75 .pcard-eval-box { font-size: 5.5pt; padding: 0.4mm 1.2mm; }
+    .pcard-rl.active { border-color: #8b3a1a; color: #8b3a1a; background: #fdf3e8; font-weight: 700; }
+    .pcard-eval-box.active { border-color: #b8963e; background: #b8963e; color: white; font-weight: 700; }
+    .pcard-sep { color: #ccc; font-size: 6pt; }
+    .pcard-stars { letter-spacing: 0.3mm; }
+    .pcard-b6 .pcard-stars { font-size: 9pt; }
+    .pcard-75 .pcard-stars { font-size: 7.5pt; }
+    .pcard-star-lit { color: #b8963e; }
+    .pcard-star-dim { color: #ddd; }
+
+    /* メモ */
+    .pcard-memo-wrap { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .pcard-memo-title {
+      font-weight: 700; color: #8b3a1a;
+      border-bottom: 0.3mm solid #b8963e; padding-bottom: 0.8mm; margin-bottom: 1mm;
+      flex-shrink: 0;
+    }
+    .pcard-b6 .pcard-memo-title { font-size: 6.5pt; }
+    .pcard-75 .pcard-memo-title { font-size: 5.5pt; }
+    .pcard-memo {
+      flex: 1; border: 0.3mm solid #ddd; border-radius: 1mm;
+      padding: 1.5mm; color: #333; overflow: hidden; line-height: 1.6;
+      word-break: break-all;
+    }
+    .pcard-b6 .pcard-memo { font-size: 7pt; }
+    .pcard-75 .pcard-memo { font-size: 6pt; }
+  }
+  .isbn-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .isbn-bar .field-input { flex: 1; }
+  .btn-isbn {
+    background: var(--ink);
+    color: var(--gold);
+    border: none;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .btn-isbn:hover { background: #2e2419; }
+  .btn-fetch {
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .btn-fetch:hover { background: #a07c30; }
+
+  /* 書名検索結果 */
+  #titleSearchResults { margin-top: 8px; }
+  .search-result-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: var(--paper2);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .search-result-item:active { background: #ede8df; }
+  .search-result-cover {
+    width: 40px; height: 56px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    flex-shrink: 0;
+    background: #f0ece4;
+  }
+  .search-result-cover-ph {
+    width: 40px; height: 56px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    background: #f0ece4;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .search-result-info { flex: 1; min-width: 0; }
+  .search-result-title { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.35; margin-bottom: 2px; }
+  .search-result-author { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+  .search-result-pub { font-size: 11px; color: var(--muted); }
+  .search-result-btn {
+    font-size: 11px; background: var(--accent); color: white;
+    border: none; border-radius: 6px; padding: 5px 10px;
+    flex-shrink: 0; cursor: pointer;
+  }
+
+  .isbn-status {
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: none;
+  }
+  .isbn-status.loading { display: block; background: #fff8e1; color: #795548; }
+  .isbn-status.success { display: block; background: #e8f5e9; color: #2e7d32; }
+  .isbn-status.error   { display: block; background: #fce4ec; color: #c62828; }
+
+  /* Scanner modal */
+  .scanner-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .scanner-modal.active { display: flex; }
+  .scanner-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+  }
+  #scanner-container {
+    width: 100%;
+    aspect-ratio: 4/3;
+    overflow: hidden;
+    border-radius: 12px;
+    position: relative;
+    background: #000;
+  }
+  #scanner-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  #scanner-container canvas { display: none; }
+  .scan-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .scan-frame {
+    width: 72%;
+    height: 38%;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+    position: relative;
+  }
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: var(--gold);
+    opacity: 0.8;
+    animation: scanline 1.8s ease-in-out infinite;
+  }
+  @keyframes scanline {
+    0%   { top: 10%; }
+    50%  { top: 85%; }
+    100% { top: 10%; }
+  }
+  .scanner-msg {
+    color: white;
+    font-size: 13px;
+    margin-top: 16px;
+    letter-spacing: 0.06em;
+    text-align: center;
+  }
+  .scanner-msg small { color: #9a8f7e; display: block; margin-top: 4px; font-size: 11px; }
+  .btn-scan-close {
+    margin-top: 20px;
+    background: none;
+    border: 1px solid #555;
+    color: #ccc;
+    border-radius: 20px;
+    padding: 10px 32px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ── 表紙写真 ── */
+  .cover-upload-area {
+    border: 2px dashed var(--line); border-radius: 10px; padding: 16px;
+    text-align: center; cursor: pointer; background: var(--paper2);
+    transition: border-color 0.2s; position: relative;
+  }
+  .cover-upload-area:hover { border-color: var(--gold); }
+  .cover-preview { width: 100%; max-height: 200px; object-fit: contain; border-radius: 8px; display: none; }
+  .cover-preview.visible { display: block; }
+  .cover-placeholder { color: var(--muted); font-size: 13px; padding: 6px 0; }
+  .cover-placeholder .icon { font-size: 30px; display: block; margin-bottom: 4px; }
+  .cover-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .btn-cover-action {
+    flex: 1; background: var(--paper2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px; font-size: 12px; cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif; color: var(--ink); transition: background 0.15s;
+  }
+  .btn-cover-action:hover { background: var(--line); }
+  .btn-cover-remove {
+    background: none; border: 1px solid #ffcdd2; border-radius: 8px;
+    padding: 8px 12px; font-size: 12px; cursor: pointer; color: #c62828;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+  /* カード一覧の表紙サムネイル */
+  .book-card-inner { display: flex; gap: 12px; align-items: flex-start; }
+  .book-card-cover {
+    width: 46px; height: 64px; border-radius: 4px; object-fit: cover;
+    flex-shrink: 0; border: 1px solid var(--line);
+  }
+  .book-card-cover-ph {
+    width: 46px; height: 64px; border-radius: 4px; background: var(--paper2);
+    border: 1px solid var(--line); flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center; font-size: 18px; color: var(--line);
+  }
+  .book-card-body { flex: 1; min-width: 0; }
+  /* 印刷用表紙 */
+  @media print {
+    .pcard-top { display: flex; gap: 3mm; margin-bottom: 2mm; }
+    .pcard-top-body { flex: 1; min-width: 0; }
+    .pcard-cover { width: 16mm; height: 23mm; object-fit: cover; border: 0.3mm solid #ccc; border-radius: 1mm; flex-shrink: 0; }
+    .pcard-cover-ph { width: 16mm; height: 23mm; border: 0.3mm solid #ddd; border-radius: 1mm; background: #f5f5f5; flex-shrink: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Print Modal -->
+<div class="print-modal" id="printModal">
+  <div class="print-sheet">
+    <h3>🖨️ 印刷</h3>
+    <div class="print-size-row">
+      <button class="print-size-btn active" id="btnB6" onclick="selectPrintSize('B6')">
+        <div class="size-label">B6</div>
+        <div class="size-desc">182×128mm 横向き</div>
+      </button>
+      <button class="print-size-btn" id="btn75" onclick="selectPrintSize('75')">
+        <div class="size-label">75×125</div>
+        <div class="size-desc">75×125mm 縦向き</div>
+      </button>
+    </div>
+    <div class="print-range-section">
+      <label>印刷する本</label>
+      <div class="seg-control">
+        <button class="seg-btn active" onclick="selectSeg(this,'printRange')">すべて</button>
+        <button class="seg-btn" onclick="selectSeg(this,'printRange')">読了</button>
+        <button class="seg-btn" onclick="selectSeg(this,'printRange')">読書中</button>
+        <button class="seg-btn" onclick="selectSeg(this,'printRange')">積読</button>
+      </div>
+      <input type="hidden" id="printRange" value="すべて">
+    </div>
+    <button class="btn-do-print" onclick="doPrint()">印刷する</button>
+    <button class="btn-cancel-print" onclick="closePrintModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- Print Area (hidden, shown only on print) -->
+<div id="printArea"></div>
+
+<!-- Scanner Modal -->
+<div class="scanner-modal" id="scannerModal">
+  <div class="scanner-wrap">
+    <div id="scanner-container">
+      <div class="scan-overlay">
+        <div class="scan-frame"><div class="scan-line"></div></div>
+      </div>
+    </div>
+    <div class="scanner-msg">
+      本のバーコードを枠内に合わせてください
+      <small>裏表紙のISBNバーコードが読み取りやすいです</small>
+    </div>
+    <div style="display:flex;justify-content:center;">
+      <button class="btn-scan-close" onclick="closeScanner()">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<div id="listSection">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <h1>📚 読書記録</h1>
+        <p>Books Journal</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-print-open" onclick="exportCSV()" title="CSVで書き出す">⬇️</button>
+        <button class="btn-print-open" onclick="document.getElementById('csvImportInput').click()" title="CSVを読み込む">⬆️</button>
+        <input type="file" id="csvImportInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+        <button class="btn-print-open" onclick="showPrintModal()">🖨️</button>
+        <button class="btn-new" onclick="showForm()">＋ 追加</button>
+      </div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="filterBooks('all', this)">すべて</button>
+    <button class="tab" onclick="filterBooks('読了', this)">読了</button>
+    <button class="tab" onclick="filterBooks('読書中', this)">読書中</button>
+    <button class="tab" onclick="filterBooks('積読', this)">積読</button>
+  </div>
+  <div class="content">
+    <div class="stats-bar" id="statsBar"></div>
+    <div id="bookList"></div>
+  </div>
+</div>
+
+<div id="formSection" class="form-view">
+  <div style="background:var(--ink);padding:52px 20px 16px;">
+    <button class="btn-back" onclick="showList()">← 一覧に戻る</button>
+    <div style="color:var(--gold);font-family:'Noto Serif JP',serif;font-size:18px;" id="formTitle">新しい本を記録</div>
+  </div>
+  <div style="padding:16px 16px 40px;">
+
+    <div class="form-section">
+      <div class="section-title">📷 バーコード / ISBN から取り込む</div>
+      <div class="isbn-bar">
+        <input class="field-input" id="f_isbn" type="text" placeholder="ISBNを入力（例：9784167110024）" inputmode="numeric">
+        <button class="btn-isbn" onclick="openScanner()" title="バーコードをスキャン">⊡</button>
+        <button class="btn-fetch" onclick="fetchByISBN()">取得</button>
+      </div>
+      <div class="isbn-status" id="isbnStatus"></div>
+      <div id="isbnCoverResult" style="display:none"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">🔍 書名で検索して取り込む</div>
+      <div class="isbn-bar">
+        <input class="field-input" id="f_title_search" type="text" placeholder="書名・著者名を入力">
+        <button class="btn-fetch" onclick="searchByTitle()">検索</button>
+      </div>
+      <div class="isbn-status" id="titleSearchStatus"></div>
+      <div id="titleSearchResults"></div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">🖼️ 表紙写真</div>
+      <div class="cover-upload-area" id="coverUploadArea" onclick="if(!document.getElementById('f_cover').value) document.getElementById('coverFileInput').click()">
+        <img class="cover-preview" id="coverPreview" src="" alt="表紙">
+        <div class="cover-placeholder" id="coverPlaceholder">
+          <span class="icon">📚</span>
+          タップして写真を選ぶ
+        </div>
+      </div>
+      <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="handleCoverFile(event)">
+      <input type="file" id="coverCameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleCoverFile(event)">
+      <div class="cover-actions" id="coverActionsTop" style="margin-top:8px;display:flex;gap:8px;">
+        <button class="btn-cover-action" onclick="document.getElementById('coverCameraInput').click()">📷 カメラ</button>
+        <button class="btn-cover-action" onclick="document.getElementById('coverFileInput').click()">🖼️ 写真を選ぶ</button>
+      </div>
+      <div class="cover-actions" id="coverActions" style="display:none">
+        <button class="btn-cover-action" onclick="document.getElementById('coverCameraInput').click()">📷 撮り直す</button>
+        <button class="btn-cover-action" onclick="document.getElementById('coverFileInput').click()">🖼️ 別の写真</button>
+        <button class="btn-cover-remove" onclick="removeCover()">削除</button>
+      </div>
+      <input type="hidden" id="f_cover" value="">
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">書誌情報</div>
+      <div class="field-row">
+        <div class="field-label">書名 *</div>
+        <input class="field-input" id="f_title" type="text" placeholder="本のタイトル">
+      </div>
+      <div class="field-row">
+        <div class="field-label">著者名</div>
+        <input class="field-input" id="f_author" type="text" placeholder="著者名">
+      </div>
+      <div class="field-row-2col">
+        <div class="field-row" style="margin-bottom:0">
+          <div class="field-label">出版社</div>
+          <input class="field-input" id="f_publisher" type="text" placeholder="出版社">
+        </div>
+        <div class="field-row" style="margin-bottom:0">
+          <div class="field-label">シリーズ</div>
+          <input class="field-input" id="f_series" type="text" placeholder="シリーズ名">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-label">訳者</div>
+        <input class="field-input" id="f_translator" type="text" placeholder="訳者名（翻訳書の場合）">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">所有・状態</div>
+      <div class="field-row">
+        <div class="field-label">所在</div>
+        <div class="seg-control">
+          <button class="seg-btn active" onclick="selectSeg(this,'f_location')">所有</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_location')">図書館</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_location')">その他</button>
+        </div>
+        <input type="hidden" id="f_location" value="所有">
+      </div>
+      <div class="field-row">
+        <div class="field-label">読書状態</div>
+        <div class="seg-control">
+          <button class="seg-btn active" onclick="selectSeg(this,'f_status')">読了</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_status')">読書中</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_status')">積読</button>
+        </div>
+        <input type="hidden" id="f_status" value="読了">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">詳細情報</div>
+      <div class="field-row">
+        <div class="field-label">初版年月日</div>
+        <input class="field-input" id="f_first_ed" type="date">
+      </div>
+      <div class="field-row">
+        <div class="field-label">再版年月日</div>
+        <input class="field-input" id="f_reprint" type="date">
+      </div>
+      <div class="field-row-2col" style="margin-top:12px">
+        <div class="field-row" style="margin-bottom:0">
+          <div class="field-label">定価（円）</div>
+          <input class="field-input" id="f_price" type="number" placeholder="例：1800">
+        </div>
+        <div class="field-row" style="margin-bottom:0">
+          <div class="field-label">購入年月日</div>
+          <input class="field-input" id="f_date" type="date">
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:12px">
+        <div class="field-label">購入書店</div>
+        <input class="field-input" id="f_shop" type="text" placeholder="例：紀伊國屋書店">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">読みの程度</div>
+      <div class="field-row">
+        <div class="field-label">読み方</div>
+        <div class="read-level" id="readLevelGroup">
+          <button class="level-btn" onclick="selectLevel(this)">流し読み</button>
+          <button class="level-btn" onclick="selectLevel(this)">部分読み</button>
+          <button class="level-btn" onclick="selectLevel(this)">通し読み</button>
+          <button class="level-btn" onclick="selectLevel(this)">精読</button>
+        </div>
+        <input type="hidden" id="f_read_level" value="">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">評価</div>
+      <div class="field-row">
+        <div class="field-label">評価 (A〜E)</div>
+        <div class="seg-control">
+          <button class="seg-btn" onclick="selectSeg(this,'f_eval')">A</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_eval')">B</button>
+          <button class="seg-btn active" onclick="selectSeg(this,'f_eval')">C</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_eval')">D</button>
+          <button class="seg-btn" onclick="selectSeg(this,'f_eval')">E</button>
+        </div>
+        <input type="hidden" id="f_eval" value="C">
+      </div>
+      <div class="field-row">
+        <div class="field-label">星評価</div>
+        <div class="star-rating" id="starRating" onclick="handleStars(event)">
+          <span data-v="1">★</span>
+          <span data-v="2">★</span>
+          <span data-v="3">★</span>
+          <span data-v="4">★</span>
+          <span data-v="5">★</span>
+        </div>
+        <input type="hidden" id="f_stars" value="0">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="section-title">メモ</div>
+      <div class="field-row">
+        <div class="field-label">概要・Keyword・Memo</div>
+        <textarea class="field-input" id="f_memo" placeholder="概要、キーワード、読んだ感想など自由にメモ…" style="min-height:120px;"></textarea>
+      </div>
+    </div>
+
+    <button class="btn-save" onclick="saveBook()">記録する</button>
+    <div id="editId" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+let books = JSON.parse(localStorage.getItem('books') || '[]');
+let currentFilter = 'all';
+let scannerRunning = false;
+
+// ── 表紙写真 ─────────────────────────────────────────────
+function handleCoverFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => setCoverImage(ev.target.result);
+  reader.readAsDataURL(file);
+}
+
+function setCoverImage(dataUrl) {
+  document.getElementById('f_cover').value = dataUrl;
+  document.getElementById('coverPreview').src = dataUrl;
+  document.getElementById('coverPreview').classList.add('visible');
+  document.getElementById('coverPlaceholder').style.display = 'none';
+  document.getElementById('coverActions').style.display = 'flex';
+}
+
+function removeCover() {
+  document.getElementById('f_cover').value = '';
+  document.getElementById('coverPreview').src = '';
+  document.getElementById('coverPreview').classList.remove('visible');
+  document.getElementById('coverPlaceholder').style.display = '';
+  document.getElementById('coverActions').style.display = 'none';
+  document.getElementById('coverFileInput').value = '';
+}
+// ─────────────────────────────────────────────────────────
+
+// ── ISBN / Scanner ──────────────────────────────────────
+function openScanner() {
+  document.getElementById('scannerModal').classList.add('active');
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.getElementById('scanner-container'),
+      constraints: { facingMode: "environment", width: 640, height: 480 }
+    },
+    decoder: { readers: ["ean_reader"] },
+    locate: true
+  }, err => {
+    if (err) { alert('カメラを起動できませんでした: ' + err); closeScanner(); return; }
+    Quagga.start();
+    scannerRunning = true;
+  });
+
+  Quagga.offDetected();
+  Quagga.onDetected(result => {
+    const code = result.codeResult.code;
+    if (code && code.length >= 10) {
+      closeScanner();
+      document.getElementById('f_isbn').value = code;
+      fetchByISBN(code);
+    }
+  });
+}
+
+function closeScanner() {
+  document.getElementById('scannerModal').classList.remove('active');
+  if (scannerRunning) { try { Quagga.stop(); } catch(e){} scannerRunning = false; }
+}
+
+async function fetchByISBN(isbn) {
+  isbn = isbn || document.getElementById('f_isbn').value.trim().replace(/-/g, '');
+  if (!isbn) { showIsbnStatus('error', 'ISBNを入力してください'); return; }
+
+  showIsbnStatus('loading', '書誌情報を取得中…');
+
+  let info = null;
+
+  // ── ① OpenBD（日本の書籍に強い・表紙画像も取得） ──
+  try {
+    const res = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
+    const json = await res.json();
+    const book = json?.[0];
+    if (book) {
+      const summary = book.summary || {};
+      const onix = book.onix || {};
+      const desc = onix?.CollateralDetail?.TextContent?.[0]?.Text || '';
+      info = {
+        title:     summary.title || '',
+        author:    summary.author || '',
+        publisher: summary.publisher || '',
+        pubDate:   summary.pubdate ? summary.pubdate.substring(0,4) : '',
+        cover:     summary.cover || '',
+        source:    'OpenBD',
+      };
+    }
+  } catch(e) { /* 次へ */ }
+
+  // ── ② 国立国会図書館（OpenBDで見つからない場合） ──
+  if (!info?.title) {
+    try {
+      const url = `https://ndlsearch.ndl.go.jp/api/opensearch?isbn=${isbn}&maximumRecords=1`;
+      const res = await fetch(url);
+      const text = await res.text();
+      const xml = new DOMParser().parseFromString(text, 'application/xml');
+      const item = xml.querySelector('item');
+      if (item) {
+        info = {
+          title:     getText(xml, 'title', item),
+          author:    getText(xml, 'creator', item) || getText(xml, 'author', item),
+          publisher: getText(xml, 'publisher', item),
+          pubDate:   (getText(xml, 'date', item) || '').substring(0,4),
+          cover:     info?.cover || '',
+          source:    '国立国会図書館',
+        };
+      }
+    } catch(e) { /* 次へ */ }
+  }
+
+  // ── ③ Google Books API（和洋書ともに網羅率が高い） ──
+  if (!info?.title) {
+    try {
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+      const json = await res.json();
+      const vol = json?.items?.[0]?.volumeInfo;
+      if (vol) {
+        const cover = vol.imageLinks?.thumbnail || vol.imageLinks?.smallThumbnail || '';
+        info = {
+          title:     vol.title || '',
+          author:    (vol.authors || []).join('、'),
+          publisher: vol.publisher || '',
+          pubDate:   (vol.publishedDate || '').substring(0,4),
+          cover:     cover.replace('http://', 'https://'), // httpsに統一
+          source:    'Google Books',
+        };
+      }
+    } catch(e) { /* 全滅 */ }
+  }
+
+  if (!info?.title) {
+    showIsbnStatus('error', '書誌情報が見つかりませんでした');
+    return;
+  }
+
+  // フォームに反映
+  if (info.title)     document.getElementById('f_title').value     = info.title;
+  if (info.author)    document.getElementById('f_author').value    = info.author;
+  if (info.publisher) document.getElementById('f_publisher').value = info.publisher;
+  if (info.pubDate) {
+    // 年だけの場合は1月1日として補完
+    const pd = info.pubDate.length === 4 ? info.pubDate + '-01-01' : info.pubDate;
+    document.getElementById('f_first_ed').value = pd;
+  }
+
+  showIsbnStatus('success', `✓ 取得しました（${info.source}）：${info.title}`);
+
+  // ── 表紙画像：書名検索と同じ候補リスト方式で取得 ──
+  if (!document.getElementById('f_cover').value && isbn) {
+    try {
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&country=JP`);
+      const json = await res.json();
+      if (json.items && json.items.length > 0) {
+        const v = json.items[0].volumeInfo || {};
+        const coverUrl = (v.imageLinks?.thumbnail || v.imageLinks?.smallThumbnail || '').replace('http://', 'https://');
+        if (coverUrl || isbn) {
+          const openBdUrl = isbn ? `https://cover.openbd.jp/${isbn}.jpg` : '';
+          const imgSrc = openBdUrl || coverUrl;
+          const container = document.getElementById('isbnCoverResult');
+          container.innerHTML = `
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">表紙画像が見つかりました：</div>
+            <div class="search-result-item" onclick="applyIsbnCover()">
+              <img class="search-result-cover" id="isbn-cover-img" src="${imgSrc}" alt="表紙" onerror="this.src='${coverUrl}';this.onerror=null;">
+              <div class="search-result-info">
+                <div class="search-result-title">${v.title || ''}</div>
+              </div>
+              <button class="search-result-btn" onclick="applyIsbnCover();event.stopPropagation()">表紙を使う</button>
+            </div>`;
+          container.style.display = 'block';
+        }
+      }
+    } catch(e) {}
+  }
+}
+
+function applyIsbnCover() {
+  const listImg = document.getElementById('isbn-cover-img');
+  if (listImg && listImg.complete && listImg.naturalWidth > 10) {
+    const preview = document.getElementById('coverPreview');
+    preview.src = listImg.src;
+    preview.style.display = 'block';
+    preview.classList.add('visible');
+    document.getElementById('f_cover').value = listImg.src;
+    document.getElementById('coverPlaceholder').style.display = 'none';
+    document.getElementById('coverActionsTop').style.display = 'none';
+    document.getElementById('coverActions').style.display = 'flex';
+    document.getElementById('isbnCoverResult').innerHTML = '';
+    document.getElementById('isbnCoverResult').style.display = 'none';
+  } else {
+    // まだ読み込み中の場合は少し待ってから再試行
+    setTimeout(applyIsbnCover, 500);
+  }
+}
+
+async function fetchCoverWithFallback(isbn, gbUrl) {}
+
+function setCoverImageUrl(url) {}
+
+
+
+function getText(xml, tag, scope) {
+  const ns = 'http://purl.org/dc/elements/1.1/';
+  let el = scope ? scope.getElementsByTagNameNS(ns, tag)[0] : xml.getElementsByTagNameNS(ns, tag)[0];
+  if (!el) el = scope ? scope.getElementsByTagName(tag)[0] : xml.getElementsByTagName(tag)[0];
+  return el ? el.textContent.trim() : '';
+}
+
+function showIsbnStatus(type, msg) {
+  const el = document.getElementById('isbnStatus');
+  el.className = 'isbn-status ' + type;
+  el.textContent = msg;
+  if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function showTitleStatus(type, msg) {
+  const el = document.getElementById('titleSearchStatus');
+  el.className = 'isbn-status ' + type;
+  el.textContent = msg;
+  if (type === 'success') setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+async function searchByTitle() {
+  const query = document.getElementById('f_title_search').value.trim();
+  if (!query) { showTitleStatus('error', '書名を入力してください'); return; }
+
+  showTitleStatus('loading', '検索中…');
+  document.getElementById('titleSearchResults').innerHTML = '';
+
+  let items = [];
+
+  // ── ① Google Books API（intitle:指定＋country=JP） ──
+  try {
+    const q = encodeURIComponent('intitle:' + query);
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=8&country=JP`);
+    const json = await res.json();
+    if (json.items && json.items.length > 0) items = json.items;
+  } catch(e) {}
+
+  // intitle:で見つからなければ通常クエリで再試行
+  if (items.length === 0) {
+    try {
+      const q = encodeURIComponent(query);
+      const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=8&country=JP`);
+      const json = await res.json();
+      if (json.items && json.items.length > 0) items = json.items;
+    } catch(e) {}
+  }
+
+  // ── ② 国立国会図書館（Google Booksで見つからない場合） ──
+  if (items.length === 0) {
+    try {
+      const q = encodeURIComponent(query);
+      const res = await fetch(`https://ndlsearch.ndl.go.jp/api/opensearch?title=${q}&maximumRecords=8`);
+      const text = await res.text();
+      const xml = new DOMParser().parseFromString(text, 'application/xml');
+      const ndlItems = Array.from(xml.querySelectorAll('item'));
+      if (ndlItems.length > 0) {
+        const ndlResults = ndlItems.map(item => {
+          const getText2 = (tag) => {
+            const ns = 'http://purl.org/dc/elements/1.1/';
+            let el = item.getElementsByTagNameNS(ns, tag)[0] || item.getElementsByTagName(tag)[0];
+            return el ? el.textContent.trim() : '';
+          };
+          const isbnRaw = getText2('identifier') || '';
+          const isbn = isbnRaw.replace(/[^0-9X]/g, '');
+          return {
+            volumeInfo: {
+              title: getText2('title'),
+              authors: [getText2('creator')].filter(Boolean),
+              publisher: getText2('publisher'),
+              publishedDate: getText2('date'),
+              industryIdentifiers: isbn ? [{ type: 'ISBN_13', identifier: isbn }] : [],
+              imageLinks: {}
+            }
+          };
+        });
+        renderSearchResults(ndlResults);
+        showTitleStatus('success', `${ndlResults.length}件見つかりました（国立国会図書館）`);
+        return;
+      }
+    } catch(e) {}
+  }
+
+  if (items.length === 0) {
+    showTitleStatus('error', '見つかりませんでした。別のキーワードで試してみてください');
+    return;
+  }
+
+  renderSearchResults(items);
+  showTitleStatus('success', `${items.length}件見つかりました`);
+}
+
+let searchResultsCache = [];
+
+function renderSearchResults(items) {
+  searchResultsCache = items.slice(0, 5);
+  const container = document.getElementById('titleSearchResults');
+  container.innerHTML = searchResultsCache.map((item, idx) => {
+    const v = item.volumeInfo || {};
+    const title = v.title || '（タイトル不明）';
+    const authors = (v.authors || []).join('、');
+    const publisher = v.publisher || '';
+    const pubDate = (v.publishedDate || '').substring(0, 4);
+    const isbn = (v.industryIdentifiers || []).find(x => x.type === 'ISBN_13')?.identifier
+              || (v.industryIdentifiers || []).find(x => x.type === 'ISBN_10')?.identifier
+              || '';
+    // OpenBDの安定した画像URLを優先、なければGoogle Books
+    const gbUrl = (v.imageLinks?.thumbnail || v.imageLinks?.smallThumbnail || '').replace('http://', 'https://');
+    const coverUrl = isbn ? `https://cover.openbd.jp/${isbn}.jpg` : gbUrl;
+    const coverHtml = coverUrl
+      ? `<img class="search-result-cover" id="src-img-${idx}" src="${coverUrl}" alt="表紙" onerror="this.src='${gbUrl}';this.onerror=null;">`
+      : '';
+    return `
+      <div class="search-result-item" onclick="applySearchResult(${idx})">
+        ${coverHtml}
+        <div class="search-result-cover-ph" style="${coverUrl ? 'display:none' : ''}">📖</div>
+        <div class="search-result-info">
+          <div class="search-result-title">${title}</div>
+          ${authors ? `<div class="search-result-author">${authors}</div>` : ''}
+          <div class="search-result-pub">${[publisher, pubDate].filter(Boolean).join('・')}</div>
+        </div>
+        <button class="search-result-btn" onclick="applySearchResult(${idx});event.stopPropagation()">選択</button>
+      </div>`;
+  }).join('');
+}
+
+function applySearchResult(idx) {
+  const item = searchResultsCache[idx];
+  if (!item) return;
+  const v = item.volumeInfo || {};
+  const title     = v.title || '';
+  const authors   = (v.authors || []).join('、');
+  const publisher = v.publisher || '';
+  const pubDate   = (v.publishedDate || '').substring(0, 4);
+  const isbn      = (v.industryIdentifiers || []).find(x => x.type === 'ISBN_13')?.identifier
+                 || (v.industryIdentifiers || []).find(x => x.type === 'ISBN_10')?.identifier
+                 || '';
+  const coverUrl  = (v.imageLinks?.thumbnail || v.imageLinks?.smallThumbnail || '').replace('http://', 'https://');
+
+  if (title)     document.getElementById('f_title').value     = title;
+  if (authors)   document.getElementById('f_author').value    = authors;
+  if (publisher) document.getElementById('f_publisher').value = publisher;
+  if (pubDate) {
+    const pd = pubDate.length === 4 ? pubDate + '-01-01' : pubDate;
+    document.getElementById('f_first_ed').value = pd;
+  }
+  if (isbn)      document.getElementById('f_isbn').value      = isbn;
+
+  // 表紙画像：リストの<img>からsrcを取得（クリア前に取得すること！）
+  const listImg = document.getElementById(`src-img-${idx}`);
+  const coverSrc = (listImg && listImg.complete && listImg.naturalWidth > 10) ? listImg.src : '';
+
+  // 結果リストを閉じて検索欄をクリア
+  document.getElementById('titleSearchResults').innerHTML = '';
+  document.getElementById('f_title_search').value = '';
+  document.getElementById('titleSearchStatus').className = 'isbn-status';
+  searchResultsCache = [];
+
+  // 表紙をセット
+  document.getElementById('f_cover').value = '';
+  document.getElementById('coverPreview').src = '';
+  document.getElementById('coverPreview').classList.remove('visible');
+  document.getElementById('coverPlaceholder').style.display = '';
+  document.getElementById('coverActionsTop').style.display = 'flex';
+  document.getElementById('coverActions').style.display = 'none';
+
+  if (coverSrc) {
+    const preview = document.getElementById('coverPreview');
+    preview.src = coverSrc;
+    preview.style.display = 'block';
+    preview.classList.add('visible');
+    document.getElementById('f_cover').value = coverSrc;
+    document.getElementById('coverPlaceholder').style.display = 'none';
+    document.getElementById('coverActionsTop').style.display = 'none';
+    document.getElementById('coverActions').style.display = 'flex';
+  }
+
+  // 書誌情報欄までスクロール
+  document.getElementById('f_title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+// ────────────────────────────────────────────────────────
+
+function renderList() {
+  const filtered = currentFilter === 'all' ? books : books.filter(b => b.status === currentFilter);
+  const list = document.getElementById('bookList');
+  
+  // Stats
+  const stats = document.getElementById('statsBar');
+  const total = books.length;
+  const done = books.filter(b=>b.status==='読了').length;
+  const reading = books.filter(b=>b.status==='読書中').length;
+  stats.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">総冊数</div></div>
+    <div class="stat-card"><div class="stat-num">${done}</div><div class="stat-label">読了</div></div>
+    <div class="stat-card"><div class="stat-num">${reading}</div><div class="stat-label">読書中</div></div>
+  `;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📖</div><p>まだ記録がありません<br>「＋ 追加」から本を登録しましょう</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.slice().reverse().map((b, ri) => {
+    const i = filtered.length - 1 - ri;
+    const actualIdx = books.indexOf(b);
+    const statusClass = b.status === '読了' ? 'badge-read' : b.status === '読書中' ? 'badge-reading' : 'badge-want';
+    const stars = b.stars > 0 ? '★'.repeat(b.stars) + '☆'.repeat(5-b.stars) : '';
+    const coverHtml = b.cover
+      ? `<img class="book-card-cover" src="${b.cover}" alt="表紙">`
+      : `<div class="book-card-cover-ph">📖</div>`;
+    return `
+      <div class="book-card" onclick="editBook(${actualIdx})">
+        <div class="book-card-inner">
+          ${coverHtml}
+          <div class="book-card-body">
+            <div class="book-title">${b.title}</div>
+            <div class="book-author">${b.author || '著者不明'} ${b.publisher ? '・' + b.publisher : ''}</div>
+            <div class="book-meta">
+              <span class="badge ${statusClass}">${b.status}</span>
+              ${b.eval ? `<span class="badge" style="background:#fdf3e4;color:var(--accent)">評価 ${b.eval}</span>` : ''}
+              ${stars ? `<span class="stars">${stars}</span>` : ''}
+              <span class="book-date">${b.date || ''}</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterBooks(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function showForm(reset=true) {
+  if(reset) {
+    clearForm();
+    document.getElementById('formTitle').textContent = '新しい本を記録';
+    document.getElementById('editId').textContent = '';
+  }
+  document.getElementById('listSection').style.display = 'none';
+  document.getElementById('formSection').classList.add('active');
+}
+
+function showList() {
+  document.getElementById('listSection').style.display = 'block';
+  document.getElementById('formSection').classList.remove('active');
+  renderList();
+}
+
+function clearForm() {
+  ['f_title','f_author','f_publisher','f_series','f_translator','f_first_ed','f_reprint','f_price','f_date','f_shop','f_memo'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_location').value = '所有';
+  document.getElementById('f_status').value = '読了';
+  document.getElementById('f_eval').value = 'C';
+  document.getElementById('f_stars').value = '0';
+  document.getElementById('f_read_level').value = '';
+  document.getElementById('f_cover').value = '';
+  // Reset segs
+  document.querySelectorAll('.seg-control').forEach(sc => {
+    sc.querySelectorAll('.seg-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  });
+  // Reset eval to C
+  const evalCtrl = document.querySelector('#f_eval').previousElementSibling;
+  if(evalCtrl) evalCtrl.querySelectorAll('.seg-btn').forEach((b,i) => b.classList.toggle('active', i===2));
+  document.querySelectorAll('#starRating span').forEach(s=>s.classList.remove('lit'));
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+  // Reset cover
+  document.getElementById('coverPreview').classList.remove('visible');
+  document.getElementById('coverPreview').src = '';
+  document.getElementById('coverPlaceholder').style.display = '';
+  document.getElementById('coverActionsTop').style.display = 'flex';
+  document.getElementById('coverActions').style.display = 'none';
+}
+
+function selectSeg(btn, hiddenId) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(hiddenId).value = btn.textContent;
+}
+
+function selectLevel(btn) {
+  document.querySelectorAll('.level-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.toggle('active');
+  document.getElementById('f_read_level').value = btn.classList.contains('active') ? btn.textContent : '';
+}
+
+function handleStars(e) {
+  const star = e.target.closest('span');
+  if(!star) return;
+  const v = parseInt(star.dataset.v);
+  document.getElementById('f_stars').value = v;
+  document.querySelectorAll('#starRating span').forEach(s => {
+    s.classList.toggle('lit', parseInt(s.dataset.v) <= v);
+  });
+}
+
+function saveBook() {
+  const title = document.getElementById('f_title').value.trim();
+  if(!title) { alert('書名を入力してください'); return; }
+
+  const book = {
+    title, 
+    author: document.getElementById('f_author').value,
+    publisher: document.getElementById('f_publisher').value,
+    series: document.getElementById('f_series').value,
+    translator: document.getElementById('f_translator').value,
+    location: document.getElementById('f_location').value,
+    status: document.getElementById('f_status').value,
+    first_ed: document.getElementById('f_first_ed').value,
+    reprint: document.getElementById('f_reprint').value,
+    price: document.getElementById('f_price').value,
+    date: document.getElementById('f_date').value,
+    shop: document.getElementById('f_shop').value,
+    read_level: document.getElementById('f_read_level').value,
+    eval: document.getElementById('f_eval').value,
+    stars: parseInt(document.getElementById('f_stars').value) || 0,
+    memo: document.getElementById('f_memo').value,
+    cover: document.getElementById('f_cover').value,
+  };
+
+  const editId = document.getElementById('editId').textContent;
+  if(editId !== '') {
+    books[parseInt(editId)] = book;
+  } else {
+    books.push(book);
+  }
+  localStorage.setItem('books', JSON.stringify(books));
+  showList();
+}
+
+function editBook(idx) {
+  const b = books[idx];
+  showForm(false);
+  document.getElementById('formTitle').textContent = '記録を編集';
+  document.getElementById('editId').textContent = idx;
+  document.getElementById('f_title').value = b.title || '';
+  document.getElementById('f_author').value = b.author || '';
+  document.getElementById('f_publisher').value = b.publisher || '';
+  document.getElementById('f_series').value = b.series || '';
+  document.getElementById('f_translator').value = b.translator || '';
+  document.getElementById('f_first_ed').value = b.first_ed || '';
+  document.getElementById('f_reprint').value = b.reprint || '';
+  document.getElementById('f_price').value = b.price || '';
+  document.getElementById('f_date').value = b.date || '';
+  document.getElementById('f_shop').value = b.shop || '';
+  document.getElementById('f_memo').value = b.memo || '';
+
+  // Cover
+  const cover = b.cover || '';
+  document.getElementById('f_cover').value = cover;
+  if (cover) {
+    document.getElementById('coverPreview').src = cover;
+    document.getElementById('coverPreview').classList.add('visible');
+    document.getElementById('coverPlaceholder').style.display = 'none';
+    document.getElementById('coverActionsTop').style.display = 'none';
+    document.getElementById('coverActions').style.display = 'flex';
+  } else {
+    document.getElementById('coverPreview').classList.remove('visible');
+    document.getElementById('coverPreview').src = '';
+    document.getElementById('coverPlaceholder').style.display = '';
+    document.getElementById('coverActions').style.display = 'none';
+  }
+
+  // Segs
+  setSegControl('f_location', b.location);
+  setSegControl('f_status', b.status);
+  setSegControl('f_eval', b.eval);
+
+  // Stars
+  const stars = b.stars || 0;
+  document.getElementById('f_stars').value = stars;
+  document.querySelectorAll('#starRating span').forEach(s => s.classList.toggle('lit', parseInt(s.dataset.v) <= stars));
+
+  // Level
+  document.querySelectorAll('.level-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent === b.read_level);
+  });
+}
+
+function setSegControl(hiddenId, value) {
+  const hidden = document.getElementById(hiddenId);
+  if(!hidden) return;
+  hidden.value = value || '';
+  const ctrl = hidden.previousElementSibling;
+  if(!ctrl) return;
+  ctrl.querySelectorAll('.seg-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === value);
+  });
+}
+
+// ── CSV 書き出し・読み込み ────────────────────────────────
+const CSV_FIELDS = [
+  'title','author','publisher','series','translator',
+  'location','status','first_ed','reprint','price',
+  'date','shop','read_level','eval','stars','memo'
+];
+const CSV_HEADERS = [
+  '書名','著者名','出版社','シリーズ','訳者',
+  '所在','読書状態','初版','再版','定価',
+  '購入日','購入書店','読み方','評価','星評価','概要・Memo'
+];
+
+function escapeCSV(v) {
+  const s = String(v ?? '');
+  return (s.includes(',') || s.includes('"') || s.includes('\n'))
+    ? '"' + s.replace(/"/g, '""') + '"'
+    : s;
+}
+
+function exportCSV() {
+  if (books.length === 0) { alert('登録されている本がありません'); return; }
+  const rows = [CSV_HEADERS.join(',')];
+  books.forEach(b => {
+    // 表紙写真（Base64）は除外してCSV化
+    rows.push(CSV_FIELDS.map(f => escapeCSV(b[f])).join(','));
+  });
+  const bom = '\uFEFF'; // Excel用BOM
+  const blob = new Blob([bom + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `読書記録_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      let text = ev.target.result;
+      // BOM除去
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { alert('データが見つかりませんでした'); return; }
+
+      // ヘッダー行をスキップ、2行目以降をパース
+      const imported = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = parseCSVLine(lines[i]);
+        if (cols.length === 0) continue;
+        const b = {};
+        CSV_FIELDS.forEach((f, idx) => { b[f] = cols[idx] || ''; });
+        b.stars = parseInt(b.stars) || 0;
+        imported.push(b);
+      }
+
+      if (imported.length === 0) { alert('インポートできるデータがありませんでした'); return; }
+
+      const mode = confirm(
+        `${imported.length}件のデータが見つかりました。\n\n` +
+        `「OK」→ 既存データに追加\n「キャンセル」→ 既存データを置き換え`
+      );
+      if (mode) {
+        books = books.concat(imported);
+      } else {
+        if (!confirm('既存のデータをすべて削除して置き換えますか？')) return;
+        books = imported;
+      }
+      localStorage.setItem('books', JSON.stringify(books));
+      renderList();
+      alert(`${imported.length}件をインポートしました`);
+    } catch(err) {
+      alert('CSVの読み込みに失敗しました: ' + err.message);
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQ) {
+      if (c === '"' && line[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"') { inQ = false; }
+      else { cur += c; }
+    } else {
+      if (c === '"') { inQ = true; }
+      else if (c === ',') { result.push(cur); cur = ''; }
+      else { cur += c; }
+    }
+  }
+  result.push(cur);
+  return result;
+}
+// ─────────────────────────────────────────────────────────
+
+// ── PRINT ───────────────────────────────────────────────
+let printSize = 'B6';
+
+function showPrintModal() { document.getElementById('printModal').classList.add('active'); }
+function closePrintModal() { document.getElementById('printModal').classList.remove('active'); }
+function selectPrintSize(s) {
+  printSize = s;
+  document.getElementById('btnB6').classList.toggle('active', s==='B6');
+  document.getElementById('btn75').classList.toggle('active', s==='75');
+}
+
+function buildCard(b, size) {
+  const cls = size === 'B6' ? 'pcard-b6' : 'pcard-75';
+  const levels = ['流し読み','部分読み','通し読み','精読'];
+  const evals  = ['A','B','C','D','E'];
+  const stars  = (b.stars||0);
+  const starsHtml = Array.from({length:5},(_,i)=>
+    `<span class="${i<stars?'pcard-star-lit':'pcard-star-dim'}">★</span>`).join('');
+  const rlHtml = levels.map(l=>
+    `<span class="pcard-rl${b.read_level===l?' active':''}">${l}</span>`).join('');
+  const evHtml = evals.map(e=>
+    `<span class="pcard-eval-box${b.eval===e?' active':''}">${e}</span>`).join('');
+  const coverHtml = b.cover
+    ? `<img class="pcard-cover" src="${b.cover}" alt="表紙">`
+    : `<div class="pcard-cover-ph"></div>`;
+
+  return `<div class="${cls}">
+    <div class="pcard-header">📚 読書記録</div>
+    <div class="pcard-body">
+      ${coverHtml}
+      <div class="pcard-right">
+        <div class="pcard-title">${b.title||''}</div>
+        <div class="pcard-author">${[b.author, b.translator?`訳：${b.translator}`:'', b.publisher].filter(Boolean).join('　')}</div>
+        <div class="pcard-fields">
+          <div class="pcard-row">
+            <div class="pcard-half"><span class="pcard-lbl">所在</span><span class="pcard-val">${b.location||'—'}</span></div>
+            <div class="pcard-half"><span class="pcard-lbl">状態</span><span class="pcard-val">${b.status||'—'}</span></div>
+          </div>
+          <div class="pcard-row">
+            <div class="pcard-half"><span class="pcard-lbl">初版</span><span class="pcard-val">${b.first_ed||'—'}</span></div>
+            <div class="pcard-half"><span class="pcard-lbl">再版</span><span class="pcard-val">${b.reprint||'—'}</span></div>
+          </div>
+          <div class="pcard-row">
+            <div class="pcard-half"><span class="pcard-lbl">定価</span><span class="pcard-val">${b.price?b.price+'円':'—'}</span></div>
+            <div class="pcard-half"><span class="pcard-lbl">購入日</span><span class="pcard-val">${b.date||'—'}</span></div>
+          </div>
+          <div class="pcard-row"><span class="pcard-lbl">購入書店</span><span class="pcard-val">${b.shop||'—'}</span></div>
+        </div>
+        <div class="pcard-ratings">
+          ${rlHtml}
+          <span class="pcard-sep">｜</span>
+          ${evHtml}
+          <span class="pcard-stars">${starsHtml}</span>
+        </div>
+        <div class="pcard-memo-wrap">
+          <div class="pcard-memo-title">概要・Keyword・Memo</div>
+          <div class="pcard-memo">${(b.memo||'').replace(/</g,'&lt;')}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function doPrint() {
+  const range = document.getElementById('printRange').value;
+  let list = range === 'すべて' ? books : books.filter(b => b.status === range);
+  if (list.length === 0) { alert('該当する本がありません'); return; }
+
+  // ページサイズをJavaScriptで動的に設定
+  const pageSize = printSize === 'B6' ? '182mm 128mm' : '75mm 125mm';
+  let styleEl = document.getElementById('dynamicPageStyle');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'dynamicPageStyle';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `@media print { @page { size: ${pageSize}; margin: 0; } }`;
+
+  document.getElementById('printArea').innerHTML = list.map(b => buildCard(b, printSize)).join('');
+  closePrintModal();
+  setTimeout(() => { window.print(); }, 200);
+}
+// ─────────────────────────────────────────────────────────
+
+renderList();
+</script>
+</body>
+</html>
